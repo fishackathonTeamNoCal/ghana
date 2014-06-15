@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import os
@@ -36,6 +37,9 @@ class Report(ndb.Model):
     vessel_id = ndb.StringProperty()
     photo = ndb.BlobProperty()
     comment = ndb.TextProperty()
+    heading = ndb.StringProperty()
+    location_typed = ndb.StringProperty()
+    date_time_typed = ndb.StringProperty()
 
 class Image(webapp2.RequestHandler):
     def get(self):
@@ -50,7 +54,6 @@ class Image(webapp2.RequestHandler):
 
 
 class ReportsViewPage(webapp2.RequestHandler):
-
     def get(self):
         reports_to_output = reports_as_dicts()
         template_values = {
@@ -78,6 +81,9 @@ def reports_as_dicts():
         if report.photo:
             path_to_img = 'img?img_id=%s' % report.key.id()
             report_to_output['path_to_img'] = path_to_img
+        report_to_output['heading'] = report.heading
+        report_to_output['location_typed'] = report.location_typed
+        report_to_output['date_time_typed'] = report.date_time_typed
         reports_to_output.append(report_to_output)
     return reports_to_output
 
@@ -98,19 +104,28 @@ class ReportEntryPage(webapp2.RequestHandler):
 class SubmitReport(webapp2.RequestHandler):
     """Handler for report submission.
 
-    The request should have the following parameters:
+    The request can have the following parameters:
       date: Float Epoch timestamp of this report, in seconds.
       lat: Latitude, as a float.
       long: Longitude, as a float.
-      text: Additional text/comments.
+      vessel_id: String
+      img: the photo image. At most one of img or encodedImg should be set.
+      encodedImg: the base64 encoded photo image. At most one of img or
+          encodedImg should be set.
+      comment: Additional text/comments.
+      heading: String input describing the trawler's direction.
+      location_typed: user-typed location (in case GPS was unavailable)
+      date_time_typed: user-typed date and time (if they chose to provide
+          something other than the current time)    
     """
 
     def post(self):
         report_collection_name = self.request.get(
             'report_collection_name', DEFAULT_REPORT_COLLECTION_NAME)
         report = Report(parent=report_collection_key(report_collection_name))
-        report.date = datetime.datetime.fromtimestamp(
-            float(self.request.get('date')))
+        request_date = self.request.get('date')
+        if request_date:
+            report.date = datetime.datetime.fromtimestamp(float(request_date))
         lat = self.request.get('lat')
         lon = self.request.get('long')
         if lat and lon:
@@ -118,7 +133,15 @@ class SubmitReport(webapp2.RequestHandler):
                 '%s, %s' % (self.request.get('lat'), self.request.get('long')))
         report.vessel_id = self.request.get('vessel_id')
         request_photo = self.request.get('img')
-        report.photo = str(request_photo)
+        if request_photo:
+            report.photo = str(request_photo)
+        else:
+            encoded_image = self.request.get('encodedImg')
+            if encoded_image:
+                report.photo = base64.b64decode(encoded_image)
+        report.heading = self.request.get('heading')
+        report.location_typed = self.request.get('location_typed')
+        report.date_time_typed = self.request.get('date_time_typed')
         report.comment = self.request.get('comment')
         report.put()
         self.redirect('/')

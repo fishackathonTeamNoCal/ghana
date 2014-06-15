@@ -16,6 +16,9 @@
         <div><img src="{{ report.path_to_img }}"></img>
 	</br>
       {% endif %}
+      Heading: {{ report.heading }}<br/>
+      Typed Location: {{ report.location_typed }}<br/>
+      Typed Date Time: {{ report.date_time_typed }}<br/>
       Comment: {{ report.comment }}<br/>
       <br/>
     {% endfor %}
