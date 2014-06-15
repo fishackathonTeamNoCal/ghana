@@ -33,6 +33,7 @@ class Report(ndb.Model):
     """Models a single report of a spotted trawler."""
     date = ndb.DateTimeProperty()
     location = ndb.GeoPtProperty()
+    vessel_id = ndb.StringProperty()
     photo = ndb.BlobProperty()
     comment = ndb.TextProperty()
 
@@ -69,8 +70,10 @@ def reports_as_dicts():
 
         # TODO(jason): timezones...
         report_to_output['date'] = report.date.strftime('%d/%m/%Y %H:%M')
-        report_to_output['lat'] = report.location.lat
-        report_to_output['long'] = report.location.lon
+        if report.location:
+            report_to_output['lat'] = report.location.lat
+            report_to_output['long'] = report.location.lon
+        report_to_output['vessel_id'] = report.vessel_id
         report_to_output['comment'] = report.comment
         if report.photo:
             path_to_img = 'img?img_id=%s' % report.key.id()
@@ -103,17 +106,17 @@ class SubmitReport(webapp2.RequestHandler):
     """
 
     def post(self):
-        # We set the same parent key on the 'Greeting' to ensure each Greeting
-        # is in the same entity group. Queries across the single entity group
-        # will be consistent. However, the write rate to a single entity group
-        # should be limited to ~1/second.
         report_collection_name = self.request.get(
             'report_collection_name', DEFAULT_REPORT_COLLECTION_NAME)
         report = Report(parent=report_collection_key(report_collection_name))
         report.date = datetime.datetime.fromtimestamp(
             float(self.request.get('date')))
-        report.location = ndb.GeoPt(
-            '%s, %s' % (self.request.get('lat'), self.request.get('long')))
+        lat = self.request.get('lat')
+        lon = self.request.get('long')
+        if lat and lon:
+            report.location = ndb.GeoPt(
+                '%s, %s' % (self.request.get('lat'), self.request.get('long')))
+        report.vessel_id = self.request.get('vessel_id')
         request_photo = self.request.get('img')
         report.photo = str(request_photo)
         report.comment = self.request.get('comment')
