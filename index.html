@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    {% for report in reports %}
+      Report: {{ loop.index }}<br/>
+      Date: {{ report.date }}<br/>
+      Lat: {{ report.lat }}<br/>
+      Long: {{ report.long }}<br/>
+      {% if report.path_to_img %}
+        Photo:
+        <div><img src="{{ report.path_to_img }}"></img>
+	</br>
+      {% endif %}
+      Comment: {{ report.comment }}<br/>
+      <br/>
+    {% endfor %}
+  </body>
+</html>
+{% endautoescape %}

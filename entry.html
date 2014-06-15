@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <form action="/submit" method="post" enctype="multipart/form-data">
+      <div>Latitude: <input type="number" step="any" name="lat"></div>
+      <div>Longitude: <input type="number" step="any" name="long"></div>
+      <div>Date (in seconds... sorry =) )<input type="number" name="date"></div>
+      <div><label>Photo:</label></div>
+      <div><input type="file" name="img"/></div>
+      <div>Comment:<textarea name="comment" rows="3" cols="60"></textarea></div>
+      <div><input type="submit" value="Submit"></div>
+    </form>
+  </body>
+</html>
+{% endautoescape %}
